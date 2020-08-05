@@ -15,6 +15,8 @@ void vaciar(Negocio neg[], int cant);
 void ordenarNegocios(Negocio x[],int t);
 void guardarNegocios(Negocio x[],int cant,string nom,string arhivo);
 void cargarMas(int &a, Negocio x[60], int rubro,int negPorZona[6][4]);
+void tabla(int negPorZona[6][4]);
+void cantidadEspacios(int num, int car_disponble);
 
 int main(){
     //Declara la matriz de cantidad de negocios por cada rubro por cada zona y la inicializa en 0
@@ -42,10 +44,13 @@ int main(){
     ordenarNegocios(beb,cont[2]);
     ordenarNegocios(par,cont[3]);
     //Muestran los negocios por rubro y los guarda en sus respectivos archivos.
+    cout<<endl<<"Nombre y zona de los negocios segun su rubro:"<<endl;
     guardarNegocios(hel,60,"Heladerias:","Heladerias.dat");
     guardarNegocios(piz,60,"Pizzerias:","Pizzerias.dat");
     guardarNegocios(beb,60,"Bebidas:","Bebidas.dat");
     guardarNegocios(par,60,"Parrillas:","Parrillas.dat");
+    //Se muestra la cantidad de negocios por rubro por zona
+    tabla(negPorZona);
     return 0;
 }
 
@@ -57,7 +62,7 @@ void guardarNegocios(Negocio x[],int cant,string nom,string archivo){
     FILE *f=fopen(arch,"wb");
     while(i<cant){
         if(x[i].Zona!=0){
-            cout<<"Nombre: "<<x[i].Nombre<<" Zona: "<<x[i].Zona<<endl;
+            cout<<"-Nombre: "<<x[i].Nombre<<" -Zona: "<<x[i].Zona<<endl;
             fwrite(&x[i],sizeof(Negocio),1,f);
         }
         i++;
@@ -72,7 +77,7 @@ void ordenarNegocios(Negocio x[],int t){
     do{
         cambio=false;
         for(j=0;j<t-1-i;j++){
-            if(strcmpi(x[j].Nombre,x[j+1].Nombre)>0){
+            if(strcmpi(x[j].Nombre,x[j+1].Nombre)>0){  
                 strcpy(aux.Nombre,x[j].Nombre);
                 aux.Zona=x[j].Zona;
                 strcpy(x[j].Nombre,x[j+1].Nombre);
@@ -121,6 +126,7 @@ void cargarNegocios(int negPorZona[6][4],Negocio hel[60],Negocio piz[60],Negocio
     }    
 }
 
+//Funcion para poder cargar los negocios en vectores de struct segun su rubro, pasado como parametro.
 void cargarMas(int &a,Negocio x[],int rubro,int negPorZona[6][4]){
     cout<<"Ingrese la zona (de 1 a 6): ";
     cin>>x[a].Zona;
@@ -133,5 +139,47 @@ void cargarMas(int &a,Negocio x[],int rubro,int negPorZona[6][4]){
     }else{
         cout<<"Esa zona ya tiene 10 negocios de ese tipo."<<endl;
         x[a].Zona=0;
+    }
+}
+
+void tabla(int cant[6][4])
+{
+    cout<<endl<<"Cantidad de negocios por rubro por zona:"<<endl;
+    cout<<"                          | Zona 1 | Zona 2 | Zona 3 | Zona 4 | Zona 5 | Zona 6"<<endl;
+    cout<<"--------------------------|--------|--------|--------|--------|--------|--------"<<endl;
+    cout<<"        Heladerias        ";
+    for(int i=0;i<6;i++)
+        cantidadEspacios(cant[i][0],10);
+    cout<<endl<<"--------------------------|--------|--------|--------|--------|--------|--------"<<endl;
+    cout<<"         Pizzerias        ";
+    for(int i=0;i<6;i++)
+        cantidadEspacios(cant[i][1],10);
+    cout<<endl<<"--------------------------|--------|--------|--------|--------|--------|--------"<<endl;
+    cout<<"          Bebidas         ";
+    for(int i=0;i<6;i++)
+        cantidadEspacios(cant[i][2],10);
+    cout<<endl<<"--------------------------|--------|--------|--------|--------|--------|--------"<<endl;
+    cout<<"         Parrillas        ";
+    for(int i=0;i<6;i++)
+        cantidadEspacios(cant[i][3],10);
+}
+
+//Funcion para contar los espacios de la tabla y que quede asi mas prolija la exposicion de datos.
+void cantidadEspacios(int num, int car_disponble)
+{
+    int cont=1,espacios,mitad,temp=num;
+    while((temp/10)>0)
+    {
+        temp/=10;
+        cont++;
+    }
+    for(int i=0;i<(car_disponble-cont);i++)
+    {
+        if(i==0)
+            cout<<"|";
+        else if(i==(car_disponble/2)-(cont/2))
+            cout<<num;
+        else
+            cout<<" ";
     }
 }
