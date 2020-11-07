@@ -11,9 +11,6 @@ int pauseScreen();
 /* ********** */
 
 
-
-
-
 /* Clear and pause */
 int clearScreen(){
     system("clear");
@@ -21,7 +18,7 @@ int clearScreen(){
 }
 
 int pauseScreen(){
-    cout<<"Presione enter para continuar..."<<'\n';
+    cout<<'\n'<<"Presione enter para continuar..."<<'\n';
     system("read _");
     return 0;
 }
