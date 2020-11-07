@@ -1,7 +1,20 @@
-#include "./Funciones/source.h"
+#ifdef _WIN32
+#include <windows.h>
+#include <stdio.h>
+#include <tchar.h>
+#define WIDTH 7
+#endif
+
+#ifdef linux
+#include "stdio.h"
+#include <cstdlib>
+#endif
+
 #include <iostream>
 #include <cstdlib>
 #include <string.h>
+#include <stdio.h>
+using namespace std;
 
 //Struct Viejos
 struct Repartidor
@@ -51,7 +64,21 @@ struct nodoColaPedidos
     nodoColaPedidos *sig;
 };
 
+struct DatoArbol{
+    char NombreCom[40];
+    int cantPedidos;
+};
+
+struct NodoArbol
+{
+    DatoArbol info;
+    NodoArbol*izq;
+    NodoArbol*der;
+};
+
 //Funciones
+int clearScreen();
+int pauseScreen();
 void recibirPedido(nodoColaPedidos *pri[], nodoColaPedidos *ult[]);
 void inicializarCola(nodoColaPedidos *cola[], int num);
 void encolarPedido(nodoColaPedidos *pri[], nodoColaPedidos *ult[], Pedido ped, int zona);
@@ -62,6 +89,9 @@ void desencolarPedidos(nodoColaPedidos *pri[],nodoColaPedidos *ult[],Pedido &ped
 void insertar(NodoSubLista*&sublista,Pedido ped);
 void mostrarRepYPed(NodoLista *listaRepartidores);
 NodoLista* buscarInsertar(NodoLista*&lista,Repartidores rep);
+void crearArbol(NodoLista *listaRepartidores);
+void buscarInsertarArbol(NodoArbol*&raiz,char NombreCom[40]);
+void listarArbol(NodoArbol*raiz);
 
 int main()
 {
@@ -92,8 +122,8 @@ int main()
             mostrarRepYPed(listaRepartidores);
             break;
         case 4:
+            crearArbol(listaRepartidores);
             exit = true;
-            cout << "Programa terminado" << endl;
             break;
         default:
             cout << "Ingrese una opcion valida" << endl;
@@ -179,7 +209,7 @@ bool verificarComercio(unsigned Rubro, char NombreCom[40], int zona)
     }
     fread(&neg, sizeof(Negocio), 1, f);
     while (!feof(f)){
-        if (strcmp(neg.Nombre, NombreCom) == 0){
+        if (strcmp(neg.Nombre, NombreCom) == 0 && neg.Zona==zona){
             fclose(f);
             return true;
         }
@@ -187,30 +217,6 @@ bool verificarComercio(unsigned Rubro, char NombreCom[40], int zona)
     }
     fclose(f);
     return false;
-/* 
-    unsigned desde,hasta,medio,cantRegistros;
-    int pos=-1;
-    desde=0;
-    fseek(f,0,SEEK_END);
-    cantRegistros=ftell(arch)/sizeof(Parcial);
-    hasta=cantRegistros-1;
-    while(pos==-1 && desde<=hasta)
-    {
-        medio=(desde+hasta)/2;
-        fseek(f,medio*sizeof(Negocio),SEEK_SET);
-        fread(&neg, sizeof(Negocio), 1, f);
-        if(strcmp(neg.Nombre, NombreCom) == 0)
-            pos=medio;
-        else
-        {
-            if(strcmp(neg.Nombre, NombreCom) > 0)
-                hasta=medio-1;
-            else
-                desde=medio+1;
-        }
-    }
-    return pos;
-*/
 }
 
 void asignarPedidos(nodoColaPedidos *pri[], nodoColaPedidos *ult[], NodoLista*&lista)
@@ -233,12 +239,15 @@ void asignarPedidos(nodoColaPedidos *pri[], nodoColaPedidos *ult[], NodoLista*&l
             insertar(p->info.listaPedidos,ped);
             i++;
         }
-        if(i!=cant-1)
-            cout<<"Solo se pudieron cargar "<<i+1<<" pedidos de los "<<cant<< "solicitados."<<endl;
-    }    
+        if(i!=cant)
+            cout<<"Solo se pudieron cargar "<<i<<" pedidos de los "<<cant<< " solicitados."<<endl;
+    }
+    else
+        cout<<"No contamos con ese repartidor en nuestro equipo."<<endl;   
 }
 
-int verificarRepartidor(char nombre[40]){
+int verificarRepartidor(char nombre[40])
+{
     Repartidor repArchivo;
     FILE*f=fopen("Repartidores.dat","rb");
     fread(&repArchivo,sizeof(Repartidor),1,f);
@@ -253,7 +262,8 @@ int verificarRepartidor(char nombre[40]){
     return -1;
 }
 
-void desencolarPedidos(nodoColaPedidos *pri[],nodoColaPedidos *ult[],Pedido &ped,int zona){
+void desencolarPedidos(nodoColaPedidos *pri[],nodoColaPedidos *ult[],Pedido &ped,int zona)
+{
    nodoColaPedidos*p=pri[zona];
    ped=p->info;
    pri[zona]=p->sig;
@@ -301,7 +311,8 @@ void insertar(NodoSubLista*&sublista,Pedido ped)
         sublista=n;
 }
 
-void mostrarRepYPed(NodoLista *listaRepartidores){
+void mostrarRepYPed(NodoLista *listaRepartidores)
+{
     NodoSubLista *r;
     while(listaRepartidores!=NULL){
         cout<<"Repartidor: " << listaRepartidores->info.Nombre<<endl;
@@ -315,6 +326,88 @@ void mostrarRepYPed(NodoLista *listaRepartidores){
     }
 }
 
-/*
+void crearArbol(NodoLista *listaRepartidores)
+{
+    NodoArbol*raiz=NULL;
+    NodoSubLista *r;
+    while(listaRepartidores!=NULL){
+        r=listaRepartidores->info.listaPedidos;
+        while(r!=NULL){
+            buscarInsertarArbol(raiz,r->info.NombreCom);
+            r=r->sig;
+        }
+        listaRepartidores=listaRepartidores->sig; 
+    }
+    listarArbol(raiz);
+}
 
-*/
+void buscarInsertarArbol(NodoArbol*&raiz,char NombreCom[40])
+{
+    NodoArbol*p=raiz;
+    while(p!=NULL && strcmp(p->info.NombreCom,NombreCom)!=0)
+    {
+        if(strcmp(NombreCom,p->info.NombreCom)<0)
+            p=p->izq;
+        else
+            p=p->der;
+    }
+    if(p!=NULL && strcmp(p->info.NombreCom,NombreCom)==0)
+        p->info.cantPedidos++;
+    else
+    {
+        NodoArbol*p,*ant,*n=new NodoArbol;
+        n->info.cantPedidos=1;
+        strcpy(n->info.NombreCom,NombreCom);
+        n->izq=n->der=NULL;
+        p=raiz;
+        while(p!=NULL)
+        {
+            ant=p;
+            if(strcmp(NombreCom,ant->info.NombreCom)<0)
+                p=p->izq;
+            else
+                p=p->der;
+        }
+        if(raiz==NULL)
+            raiz=n;
+        else
+        {
+            if(strcmp(NombreCom,ant->info.NombreCom)<0)
+                ant->izq=n;
+            else
+                ant->der=n;
+        }
+    }    
+}
+
+void listarArbol(NodoArbol*raiz)
+{
+    if(raiz!=NULL)
+    {
+        listarArbol(raiz->izq);
+        cout<<"Negocio: "<<raiz->info.NombreCom<<" |Cant. de pedidos: "<<raiz->info.cantPedidos<<endl;
+        listarArbol(raiz->der);
+    }
+}
+
+
+/* Clear and pause */
+int clearScreen(){
+    #ifdef _WIN32
+        system("cls");
+    #else
+        system("clear");
+    #endif
+    return 0;
+}
+
+int pauseScreen(){
+    #ifdef _WIN32
+        system("pause");
+    #else
+        cout<<"Presione enter para continuar..."<<endl;
+        system("read _");
+    #endif
+    return 0;
+}
+/* *************** */
