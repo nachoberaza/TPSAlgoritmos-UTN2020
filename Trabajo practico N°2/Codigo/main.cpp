@@ -1,3 +1,4 @@
+/*  Seleccion de librerias opcionales para cada sistema */
 #ifdef _WIN32
 #include <windows.h>
 #include <stdio.h>
@@ -9,6 +10,7 @@
 #include "stdio.h"
 #include <cstdlib>
 #endif
+/* **************************************************** */
 
 #include <iostream>
 #include <cstdlib>
@@ -16,7 +18,7 @@
 #include <stdio.h>
 using namespace std;
 
-//Struct Viejos
+//Struct Viejos (para los archivos)
 struct Repartidor
 {
     unsigned DNI;
@@ -31,7 +33,6 @@ struct Negocio
 };
 
 //Struct Nuevos
-
 struct Pedido
 {
     char Domicilio[40];
@@ -76,8 +77,10 @@ struct NodoArbol
     NodoArbol*der;
 };
 
-//Funciones
+/* ------------------ Prototipos de Funciones ------------------ */
+//Limpia la pantalla
 int clearScreen();
+//"Ingrese una tecla para continuar"
 int pauseScreen();
 void recibirPedido(nodoColaPedidos *pri[], nodoColaPedidos *ult[]);
 void inicializarCola(nodoColaPedidos *cola[], int num);
@@ -92,6 +95,7 @@ NodoLista* buscarInsertar(NodoLista*&lista,Repartidores rep);
 void crearArbol(NodoLista *listaRepartidores);
 void buscarInsertarArbol(NodoArbol*&raiz,char NombreCom[40]);
 void listarArbol(NodoArbol*raiz);
+/* ------------------ *********************** ------------------ */
 
 int main()
 {
@@ -99,12 +103,14 @@ int main()
     int option = 0;
     nodoColaPedidos *priCola[6], *ultCola[6];
     NodoLista *listaRepartidores=NULL;
+    //Inicializamos los vectores de colas en NULL
     inicializarCola(priCola, 6);
     inicializarCola(ultCola, 6);
     while (!exit)
     {
         clearScreen();
-        cout << "Menu: 1) Recibir Pedido" << endl;
+        cout << "      === Menu===      "<<endl; 
+        cout << "      1) Recibir Pedido" << endl;
         cout << "      2) Asignar Pedido a un Repartidor" << endl;
         cout << "      3) Mostrar" << endl;
         cout << "      4) Salir" << endl;
@@ -113,15 +119,19 @@ int main()
         switch (option)
         {
         case 1:
+            //Ingresar los pedidos
             recibirPedido(priCola, ultCola);
             break;
         case 2:
+            //Asignar pedidos a los repartidores
             asignarPedidos(priCola, ultCola, listaRepartidores);
             break;
         case 3:
+            //Mostrar lista de repartidores y sus sublistas de pedidos
             mostrarRepYPed(listaRepartidores);
             break;
         case 4:
+            //Crear arbol de negocios que recibieron pedidos y la cantidad de pedidos
             crearArbol(listaRepartidores);
             exit = true;
             break;
@@ -147,6 +157,7 @@ void recibirPedido(nodoColaPedidos *pri[], nodoColaPedidos *ult[])
         cin.getline(ped.NombreCom, 39);
         cout << "Ingrese el rubro del comercio (1: Heladeria, 2: Pizzeria, 3: Bebidas, 4:Parrilla): ";
         cin >> ped.Rubro;
+        //El if verifica que exista ese comercio en esa zona y en ese rubro
         if (verificarComercio(ped.Rubro, ped.NombreCom, zona))
         {
             cin.ignore();
@@ -154,6 +165,7 @@ void recibirPedido(nodoColaPedidos *pri[], nodoColaPedidos *ult[])
             cin.getline(ped.Domicilio, 39);
             cout << "Ingrese el importe de la compra: ";
             cin >> ped.Importe;
+            //Agrega el pedido a la cola que le corresponde por su zona
             encolarPedido(pri, ult, ped, zona);
         }
         else
@@ -209,7 +221,7 @@ bool verificarComercio(unsigned Rubro, char NombreCom[40], int zona)
     }
     fread(&neg, sizeof(Negocio), 1, f);
     while (!feof(f)){
-        if (strcmp(neg.Nombre, NombreCom) == 0 && neg.Zona==zona){
+        if (strcmpi(neg.Nombre, NombreCom) == 0 && neg.Zona==zona){
             fclose(f);
             return true;
         }
@@ -227,18 +239,24 @@ void asignarPedidos(nodoColaPedidos *pri[], nodoColaPedidos *ult[], NodoLista*&l
     cin.ignore();
     cout<<"Ingrese el nombre del repartidor: ";
     cin.getline(rep.Nombre, 39);
+    //Verifica que el repartidor exista en el archivo de repartidores
     zona=verificarRepartidor(rep.Nombre);
     if(zona>0){
         cout<<"Ingrese la cantidad de pedidos a entregar: ";
         cin>>cant;
-        while(i<cant&&pri[zona]!=NULL)
+        while(i<cant && pri[zona]!=NULL)
         {
+            //elimina nodos de la respectiva cola de pedidos
             desencolarPedidos(pri,ult,ped,zona);
-            rep.listaPedidos=NULL;
+            rep.listaPedidos=NULL;            
+            //busca al repartidor en la lista de repartidores, si es su primer pedido, lo agrega.
             NodoLista*p=buscarInsertar(lista,rep);
+            //inserta el pedido en la sublista de su repartidor
             insertar(p->info.listaPedidos,ped);
             i++;
         }
+        //en el caso de que quiera cargar mas pedidos de los que existen, 
+        //informa la solo los que fueron posible entregar
         if(i!=cant)
             cout<<"Solo se pudieron cargar "<<i<<" pedidos de los "<<cant<< " solicitados."<<endl;
     }
@@ -252,7 +270,7 @@ int verificarRepartidor(char nombre[40])
     FILE*f=fopen("Repartidores.dat","rb");
     fread(&repArchivo,sizeof(Repartidor),1,f);
     while(!feof(f)){
-        if(strcmp(repArchivo.Nombre,nombre)==0){
+        if(strcmpi(repArchivo.Nombre,nombre)==0){
             fclose(f);
             return repArchivo.Zona;
         }
@@ -275,12 +293,12 @@ void desencolarPedidos(nodoColaPedidos *pri[],nodoColaPedidos *ult[],Pedido &ped
 NodoLista* buscarInsertar(NodoLista*&lista,Repartidores rep)
 {
     NodoLista*ant,*p=lista;
-    while(p!=NULL && strcmp(p->info.Nombre,rep.Nombre)<0)
+    while(p!=NULL && strcmpi(p->info.Nombre,rep.Nombre)<0)
     {
         ant=p;
         p=p->sig;
     }
-    if(p!=NULL && strcmp(p->info.Nombre,rep.Nombre)==0)
+    if(p!=NULL && strcmpi(p->info.Nombre,rep.Nombre)==0)
         return p;
     else
     {
@@ -311,6 +329,7 @@ void insertar(NodoSubLista*&sublista,Pedido ped)
         sublista=n;
 }
 
+//muestra la lista de repartidores, con sus respectivas sublistas de pedidos entregados
 void mostrarRepYPed(NodoLista *listaRepartidores)
 {
     NodoSubLista *r;
@@ -333,25 +352,28 @@ void crearArbol(NodoLista *listaRepartidores)
     while(listaRepartidores!=NULL){
         r=listaRepartidores->info.listaPedidos;
         while(r!=NULL){
+            //busca si existe el local en el árbol, si existe le suma 1 a la cantidad
+            //de pedidos del local. Si no existe, lo agrega al árbol.
             buscarInsertarArbol(raiz,r->info.NombreCom);
             r=r->sig;
         }
         listaRepartidores=listaRepartidores->sig; 
     }
+    //Muestra los negocios del arbol y la cantidad de pedidos de cada uno.
     listarArbol(raiz);
 }
 
 void buscarInsertarArbol(NodoArbol*&raiz,char NombreCom[40])
 {
     NodoArbol*p=raiz;
-    while(p!=NULL && strcmp(p->info.NombreCom,NombreCom)!=0)
+    while(p!=NULL && strcmpi(p->info.NombreCom,NombreCom)!=0)
     {
-        if(strcmp(NombreCom,p->info.NombreCom)<0)
+        if(strcmpi(NombreCom,p->info.NombreCom)<0)
             p=p->izq;
         else
             p=p->der;
     }
-    if(p!=NULL && strcmp(p->info.NombreCom,NombreCom)==0)
+    if(p!=NULL && strcmpi(p->info.NombreCom,NombreCom)==0)
         p->info.cantPedidos++;
     else
     {
@@ -363,7 +385,7 @@ void buscarInsertarArbol(NodoArbol*&raiz,char NombreCom[40])
         while(p!=NULL)
         {
             ant=p;
-            if(strcmp(NombreCom,ant->info.NombreCom)<0)
+            if(strcmpi(NombreCom,ant->info.NombreCom)<0)
                 p=p->izq;
             else
                 p=p->der;
@@ -372,7 +394,7 @@ void buscarInsertarArbol(NodoArbol*&raiz,char NombreCom[40])
             raiz=n;
         else
         {
-            if(strcmp(NombreCom,ant->info.NombreCom)<0)
+            if(strcmpi(NombreCom,ant->info.NombreCom)<0)
                 ant->izq=n;
             else
                 ant->der=n;
